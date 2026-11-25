@@ -34,21 +34,25 @@ const text =
 // this one line, byte for byte: no carriage return (a second kind of line
 // break), no leading or trailing padding (the judge reads the file as
 // submitted), and no control characters.
-const codePoints = [...text].length;
-if (codePoints < 1 || codePoints > 400 || text.trim().length === 0) {
-  throw new Error(
-    `entry must be 1-400 characters of non-blank text, got ${codePoints}`,
-  );
+function validateEntry(text: string): void {
+  const codePoints = [...text].length;
+  if (codePoints < 1 || codePoints > 400 || text.trim().length === 0) {
+    throw new Error(
+      `entry must be 1-400 characters of non-blank text, got ${codePoints}`,
+    );
+  }
+  if (text.includes("\n") || text.includes("\r")) {
+    throw new Error("entry must be a single line");
+  }
+  if (text !== text.trim()) {
+    throw new Error("entry must not start or end with whitespace");
+  }
+  if (/[\u0000-\u001f\u007f\u2028\u2029]/.test(text)) {
+    throw new Error("entry must not contain control characters");
+  }
 }
-if (text.includes("\n") || text.includes("\r")) {
-  throw new Error("entry must be a single line");
-}
-if (text !== text.trim()) {
-  throw new Error("entry must not start or end with whitespace");
-}
-if (/[\u0000-\u001f\u007f\u2028\u2029]/.test(text)) {
-  throw new Error("entry must not contain control characters");
-}
+
+validateEntry(text);
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", text, { encoding: "utf8", mode: 0o644 });
@@ -69,3 +73,6 @@ if (written !== text) {
 if (Buffer.byteLength(written, "utf8") !== Buffer.byteLength(text, "utf8")) {
   throw new Error("entry file byte length does not match the gated line");
 }
+console.error(
+  `entry written: ${[...text].length} chars, ${Buffer.byteLength(text, "utf8")} bytes, status ok`,
+);
